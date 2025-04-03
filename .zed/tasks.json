@@ -1,0 +1,26 @@
+[
+  {
+    "label": "Manim Preview (480)",
+    "command": "manim -pql $ZED_FILE $ZED_SELECTED_TEXT",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "always",
+    "shell": "system",
+    "show_summary": true,
+    "show_output": true
+  },
+  {
+    "label": "Manim Preview (1K)",
+    "command": "manim -pqh $ZED_FILE $ZED_SELECTED_TEXT",
+    "env": {},
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always",
+    "hide": "always",
+    "shell": "system",
+    "show_summary": true,
+    "show_output": true
+  }
+]
