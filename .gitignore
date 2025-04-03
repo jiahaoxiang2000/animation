@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Manim-generated files
+media/
+output/
+tmp/
