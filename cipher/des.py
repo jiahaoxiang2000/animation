@@ -1,7 +1,7 @@
 from manim import *
 from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.gtts import GTTSService
-
+from manim_voiceover.services.openai import OpenAIService
 
 class DESComponents:
     """Helper class that provides DES-related visual components"""
@@ -188,6 +188,12 @@ class DESStructureScene(VoiceoverScene):
     """Shows the overall structure of the DES algorithm"""
 
     def construct(self):
+        # self.set_speech_service(
+        #     OpenAIService(
+        #         voice="fable",
+        #         model="tts-1-hd",
+        #     )
+        # )
         self.set_speech_service(GTTSService())
         
         title = Text("DES Algorithm Structure", font_size=48, color=BLUE_D).to_edge(UP)
@@ -248,9 +254,9 @@ class DESStructureScene(VoiceoverScene):
         
         # Key Schedule details - Using LaTeX for PC-1 and PC-2 
         key_structure = VGroup(
-            Tex("Permuted Choice 1 ($PC$-$1$)", font_size=20),
+            Tex("Permuted Choice 1 ($PC_{1}$)", font_size=20),
             Text("Key Rotation", font_size=20),
-            Tex("Permuted Choice 2 ($PC$-$2$)", font_size=20)
+            Tex("Permuted Choice 2 ($PC_{2}$)", font_size=20)
         ).arrange(DOWN, buff=0.5).scale(0.9).move_to(key_schedule_box)
         
         with self.voiceover("The key schedule transforms the original 56-bit key through permutation and bit rotations to generate sixteen 48-bit subkeys, one for each round.") as tracker:
@@ -323,8 +329,6 @@ class DESStructureScene(VoiceoverScene):
                 Indicate(connection_text, color=YELLOW, scale_factor=1.1),
                 run_time=tracker.duration
             )
-        
-        self.wait(1)
         
         # Update the fade-out voiceover to indicate what's coming next
         with self.voiceover("Now that we've seen the overall structure of DES, let's explore the details of both the encryption process and the key schedule.") as tracker:
