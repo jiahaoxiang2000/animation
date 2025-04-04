@@ -82,16 +82,16 @@ class DESIntroScene(VoiceoverScene):
     """Introduction to DES with basic overview"""
 
     def construct(self):
-        self.set_speech_service(GTTSService(language='en'))
+        self.set_speech_service(GTTSService())
 
         # Title
-        title = Text("Data Encryption Standard (DES)", font_size=48)
+        title = Text("Data Encryption Standard (DES)",
+                     font_size=48, color=BLUE_D)
         with self.voiceover("Welcome to this explanation of the Data Encryption Standard, or DES."):
             self.play(Write(title))
-        with self.voiceover("DES is a symmetric-key block cipher that was once widely used for data encryption."):
-            self.play(title.animate.to_edge(UP))
+            self.play(title.animate.to_edge(UP).shift(DOWN * 0.3))
 
-        # Overview of DES
+        # Overview of DES - Show this immediately after the title
         des_overview = BulletedList(
             "Developed in the 1970s",
             "Block size: 64 bits",
@@ -100,14 +100,88 @@ class DESIntroScene(VoiceoverScene):
             font_size=36
         ).next_to(title, DOWN, buff=0.5)
 
-        with self.voiceover("DES was developed in the 1970s. It uses a 64-bit block size and a 56-bit key, although the key is typically represented as 64 bits with 8 bits used for parity checking."):
-            self.play(FadeIn(des_overview[:3]))
+        with self.voiceover("DES was developed in the 1970s as the first publicly available encryption algorithm standardized by the US government. It quickly became one of the most widely used encryption methods worldwide."):
+            self.play(FadeIn(des_overview[0]))
 
-        with self.voiceover("The algorithm processes data through 16 rounds of encryption operations."):
+        with self.voiceover("Let's understand the basic parameters of DES as an encryption algorithm. It has a block size of 64 bits and a key size of 56 bits with 8 parity bits."):
+            self.play(FadeIn(des_overview[1:3]))
+
+        with self.voiceover("The algorithm processes data through 16 rounds of encryption operations, making it highly secure for its time."):
             self.play(FadeIn(des_overview[3]))
 
-        with self.voiceover("Let's take a closer look at how DES works."):
-            self.play(FadeOut(title), FadeOut(des_overview))
+        # Mathematical explanation of symmetric-key cipher
+        symmetric_key_formula = MathTex(
+            r"C = E_K(P)", r"\quad", r"P = D_K(C)"
+        ).scale(0.9)
+
+        symmetric_key_labels = VGroup(
+            Text("Encryption", font_size=24),
+            Text("Decryption", font_size=24)
+        )
+        symmetric_key_labels[0].next_to(
+            symmetric_key_formula[0], DOWN, buff=0.2)
+        symmetric_key_labels[1].next_to(
+            symmetric_key_formula[2], DOWN, buff=0.2)
+
+        mathematical_group = VGroup(
+            symmetric_key_formula, symmetric_key_labels)
+        mathematical_group.next_to(des_overview, DOWN, buff=0.6)
+
+        with self.voiceover("DES is a symmetric-key cipher, which means the same key is used for both encryption and decryption. We can represent this mathematically."):
+            self.play(
+                des_overview.animate.scale(0.8).to_edge(
+                    LEFT).shift(RIGHT * 0.5),
+                Write(symmetric_key_formula),
+                Write(symmetric_key_labels)
+            )
+
+        # Block cipher diagram
+        block_cipher_diagram = VGroup(
+            Rectangle(height=1, width=1.5, stroke_color=BLUE).set_fill(
+                BLUE_E, opacity=0.3),
+            Text("Block\nCipher", font_size=20)
+        )
+        block_cipher_diagram[1].move_to(block_cipher_diagram[0])
+
+        arrows = VGroup(
+            Arrow(LEFT * 3, block_cipher_diagram[0].get_left(), buff=0.2),
+            Arrow(block_cipher_diagram[0].get_right(), RIGHT * 3, buff=0.2)
+        )
+
+        plaintext = Text("Plaintext\n(64 bits)",
+                         font_size=20).next_to(arrows[0], LEFT)
+        ciphertext = Text("Ciphertext\n(64 bits)",
+                          font_size=20).next_to(arrows[1], RIGHT)
+
+        key_arrow = Arrow(
+            UP * 1.5, block_cipher_diagram[0].get_top(), buff=0.2)
+        key_text = Text("Key (56 bits)", font_size=20).next_to(key_arrow, UP)
+
+        cipher_diagram = VGroup(
+            block_cipher_diagram, arrows, plaintext, ciphertext, key_arrow, key_text
+        )
+        cipher_diagram.scale(0.8).to_edge(RIGHT).shift(LEFT * 0.5 + UP * 0.3)
+
+        with self.voiceover("As a block cipher, DES processes fixed-size blocks of data - specifically 64 bits at a time - using a 56-bit key."):
+            self.play(Create(cipher_diagram))
+
+        with self.voiceover("The input plaintext is divided into 64-bit blocks, and each block is encrypted separately using the same key to produce 64-bit blocks of ciphertext."):
+            self.play(
+                Indicate(plaintext, color=GREEN),
+                Indicate(key_text, color=YELLOW),
+                Indicate(block_cipher_diagram, color=BLUE),
+                Indicate(ciphertext, color=RED),
+                run_time=4
+            )
+
+        with self.voiceover("Let's take a closer look at how DES works internally.") as track:
+            self.play(
+                FadeOut(title),
+                FadeOut(des_overview),
+                FadeOut(mathematical_group),
+                FadeOut(cipher_diagram),
+                run_time=track.duration
+            )
 
 
 class DESStructureScene(VoiceoverScene):
