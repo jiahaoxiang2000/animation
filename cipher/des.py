@@ -165,13 +165,13 @@ class DESIntroScene(VoiceoverScene):
         with self.voiceover("As a block cipher, DES processes fixed-size blocks of data - specifically 64 bits at a time - using a 56-bit key."):
             self.play(Create(cipher_diagram))
 
-        with self.voiceover("The input plaintext is divided into 64-bit blocks, and each block is encrypted separately using the same key to produce 64-bit blocks of ciphertext."):
+        with self.voiceover("The input plaintext is divided into 64-bit blocks, and each block is encrypted separately using the same key to produce 64-bit blocks of ciphertext.") as track:
             self.play(
                 Indicate(plaintext, color=GREEN),
                 Indicate(key_text, color=YELLOW),
                 Indicate(block_cipher_diagram, color=BLUE),
                 Indicate(ciphertext, color=RED),
-                run_time=4
+                run_time=track.duration
             )
 
         with self.voiceover("Let's take a closer look at how DES works internally.") as track:
