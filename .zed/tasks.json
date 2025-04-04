@@ -1,12 +1,12 @@
 [
   {
     "label": "Manim Preview (480)",
-    "command": "manim -pql $ZED_FILE $ZED_SELECTED_TEXT",
+    "command": "manim -pql $ZED_FILE $ZED_SELECTED_TEXT ",
     "env": {},
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
-    "reveal": "no_focus",
-    "hide": "always",
+    "reveal": "never",
+    "hide": "never",
     "shell": "system",
     "show_summary": true,
     "show_output": true
