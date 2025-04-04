@@ -67,18 +67,18 @@ class RecorderExample(VoiceoverScene):
     def construct(self):
         # You can choose from a multitude of TTS services,
         # or in this example, record your own voice:
-        # self.set_speech_service(GTTSService())
-        self.set_speech_service(RecorderService())
+        self.set_speech_service(GTTSService(language='en'))
+        # self.set_speech_service(RecorderService())
 
         circle = Circle()
 
         # Surround animation sections with with-statements:
-        with self.voiceover(text="我们将去画一个圆") as tracker:
+        with self.voiceover(text="We are going to draw a circle") as tracker:
             self.play(Create(circle), run_time=tracker.duration)
             # The duration of the animation is received from the audio file
             # and passed to the tracker automatically.
 
-        # # This part will not start playing until the previous voiceover is finished.
-        with self.voiceover(text="将它向左移动2个单位") as tracker:
+        # This part will not start playing until the previous voiceover is finished.
+        with self.voiceover(text="Let's move it 2 units to the left") as tracker:
             self.play(circle.animate.shift(2 * LEFT),
                       run_time=tracker.duration)
