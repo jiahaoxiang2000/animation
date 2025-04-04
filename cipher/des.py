@@ -3,86 +3,12 @@ from manim_voiceover import VoiceoverScene
 from manim_voiceover.services.gtts import GTTSService
 
 
-class DESExplanation(VoiceoverScene):
-    def construct(self):
-        # Set up the voice service
-        self.set_speech_service(GTTSService(language='en'))
+class DESComponents:
+    """Helper class that provides DES-related visual components"""
 
-        # Title
-        title = Text("Data Encryption Standard (DES)", font_size=48)
-        with self.voiceover("Welcome to this explanation of the Data Encryption Standard, or DES."):
-            self.play(Write(title))
-        with self.voiceover("DES is a symmetric-key block cipher that was once widely used for data encryption."):
-            self.play(title.animate.to_edge(UP))
-
-        # Overview of DES
-        des_overview = BulletedList(
-            "Developed in the 1970s",
-            "Block size: 64 bits",
-            "Key size: 56 bits (with 8 parity bits)",
-            "16 rounds of processing",
-            font_size=36
-        ).next_to(title, DOWN, buff=0.5)
-
-        with self.voiceover("DES was developed in the 1970s. It uses a 64-bit block size and a 56-bit key, although the key is typically represented as 64 bits with 8 bits used for parity checking."):
-            self.play(FadeIn(des_overview[:3]))
-
-        with self.voiceover("The algorithm processes data through 16 rounds of encryption operations."):
-            self.play(FadeIn(des_overview[3]))
-
-        # Clear screen for the next section
-        with self.voiceover("Let's take a closer look at how DES works."):
-            self.play(FadeOut(title), FadeOut(des_overview))
-
-        # DES structure diagram
-        des_structure = self.create_des_structure()
-
-        with self.voiceover("DES is a Feistel network that consists of an initial permutation, followed by 16 rounds of encryption, and finally a final permutation."):
-            self.play(Create(des_structure))
-
-        # Key schedule explanation
-        with self.voiceover("The DES key schedule generates 16 48-bit subkeys from the original 56-bit key."):
-            key_schedule = Text(
-                "Key Schedule: 56-bit → 16 × 48-bit subkeys", font_size=36)
-            self.play(FadeIn(key_schedule.to_edge(UP)))
-
-        # Round function explanation
-        round_function = self.create_round_function()
-
-        with self.voiceover("In each round, the data block is split into left and right halves. The right half goes through the F function, which includes expansion, key mixing, S-box substitution, and permutation."):
-            self.play(FadeOut(des_structure), FadeIn(round_function))
-
-        # Security discussion
-        security_text = Text("Security Considerations",
-                             font_size=42).to_edge(UP)
-        security_points = BulletedList(
-            "56-bit key is too small by modern standards",
-            "Vulnerable to brute force attacks",
-            "Triple DES (3DES) extends security",
-            "Replaced by AES for most applications",
-            font_size=36
-        ).next_to(security_text, DOWN, buff=0.5)
-
-        with self.voiceover("Today, DES is considered insecure due to its small key size. A 56-bit key can be brute-forced with modern computing power."):
-            self.play(FadeOut(round_function), FadeOut(key_schedule),
-                      FadeIn(security_text), FadeIn(security_points[:2]))
-
-        with self.voiceover("Triple DES was developed to extend DES's security life, but most modern applications now use AES instead."):
-            self.play(FadeIn(security_points[2:]))
-
-        # Conclusion
-        conclusion = Text(
-            "DES was a groundbreaking cipher that influenced modern cryptography", font_size=36)
-
-        with self.voiceover("Despite its limitations, DES was a groundbreaking cipher that greatly influenced the field of modern cryptography."):
-            self.play(FadeOut(security_text), FadeOut(
-                security_points), FadeIn(conclusion))
-
-        with self.voiceover("Thanks for watching this explanation of the Data Encryption Standard."):
-            self.play(FadeOut(conclusion))
-
-    def create_des_structure(self):
-        # Create a simple diagram showing DES structure
+    @staticmethod
+    def create_des_structure():
+        """Create a simple diagram showing DES structure"""
         diagram = VGroup()
 
         # Initial permutation box
@@ -117,8 +43,9 @@ class DESExplanation(VoiceoverScene):
                          input_label, output_label)
         return diagram
 
-    def create_round_function(self):
-        # Create a diagram of the DES round function
+    @staticmethod
+    def create_round_function():
+        """Create a diagram of the DES round function"""
         round_group = VGroup()
 
         # Split input to L and R
@@ -149,3 +76,146 @@ class DESExplanation(VoiceoverScene):
         round_group.add(xor_text)
 
         return round_group.arrange(DOWN, center=True, buff=0.4)
+
+
+class DESIntroScene(VoiceoverScene):
+    """Introduction to DES with basic overview"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # Title
+        title = Text("Data Encryption Standard (DES)", font_size=48)
+        with self.voiceover("Welcome to this explanation of the Data Encryption Standard, or DES."):
+            self.play(Write(title))
+        with self.voiceover("DES is a symmetric-key block cipher that was once widely used for data encryption."):
+            self.play(title.animate.to_edge(UP))
+
+        # Overview of DES
+        des_overview = BulletedList(
+            "Developed in the 1970s",
+            "Block size: 64 bits",
+            "Key size: 56 bits (with 8 parity bits)",
+            "16 rounds of processing",
+            font_size=36
+        ).next_to(title, DOWN, buff=0.5)
+
+        with self.voiceover("DES was developed in the 1970s. It uses a 64-bit block size and a 56-bit key, although the key is typically represented as 64 bits with 8 bits used for parity checking."):
+            self.play(FadeIn(des_overview[:3]))
+
+        with self.voiceover("The algorithm processes data through 16 rounds of encryption operations."):
+            self.play(FadeIn(des_overview[3]))
+
+        with self.voiceover("Let's take a closer look at how DES works."):
+            self.play(FadeOut(title), FadeOut(des_overview))
+
+
+class DESStructureScene(VoiceoverScene):
+    """Shows the overall structure of the DES algorithm"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # DES structure diagram
+        des_structure = DESComponents.create_des_structure()
+
+        with self.voiceover("DES is a Feistel network that consists of an initial permutation, followed by 16 rounds of encryption, and finally a final permutation."):
+            self.play(Create(des_structure))
+
+        self.wait(1)
+
+        # Key schedule explanation
+        with self.voiceover("The DES key schedule generates 16 48-bit subkeys from the original 56-bit key."):
+            key_schedule = Text(
+                "Key Schedule: 56-bit → 16 × 48-bit subkeys", font_size=36)
+            self.play(FadeIn(key_schedule.to_edge(UP)))
+
+        self.wait(1)
+        self.play(FadeOut(des_structure), FadeOut(key_schedule))
+
+
+class DESRoundFunctionScene(VoiceoverScene):
+    """Details of the DES round function"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # Round function explanation
+        round_function = DESComponents.create_round_function()
+
+        with self.voiceover("In each round, the data block is split into left and right halves. The right half goes through the F function, which includes expansion, key mixing, S-box substitution, and permutation."):
+            self.play(FadeIn(round_function))
+
+        self.wait(1)
+        self.play(FadeOut(round_function))
+
+
+class DESSecurityScene(VoiceoverScene):
+    """Discussion of DES security considerations"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # Security discussion
+        security_text = Text("Security Considerations",
+                             font_size=42).to_edge(UP)
+        security_points = BulletedList(
+            "56-bit key is too small by modern standards",
+            "Vulnerable to brute force attacks",
+            "Triple DES (3DES) extends security",
+            "Replaced by AES for most applications",
+            font_size=36
+        ).next_to(security_text, DOWN, buff=0.5)
+
+        with self.voiceover("Today, DES is considered insecure due to its small key size. A 56-bit key can be brute-forced with modern computing power."):
+            self.play(FadeIn(security_text), FadeIn(security_points[:2]))
+
+        with self.voiceover("Triple DES was developed to extend DES's security life, but most modern applications now use AES instead."):
+            self.play(FadeIn(security_points[2:]))
+
+        self.wait(1)
+        self.play(FadeOut(security_text), FadeOut(security_points))
+
+
+class DESConclusionScene(VoiceoverScene):
+    """Conclusion scene for the DES explanation"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # Conclusion
+        conclusion = Text(
+            "DES was a groundbreaking cipher that influenced modern cryptography", font_size=36)
+
+        with self.voiceover("Despite its limitations, DES was a groundbreaking cipher that greatly influenced the field of modern cryptography."):
+            self.play(FadeIn(conclusion))
+
+        with self.voiceover("Thanks for watching this explanation of the Data Encryption Standard."):
+            self.play(FadeOut(conclusion))
+
+
+class DESExplanation(VoiceoverScene):
+    """Main scene that coordinates all the DES explanation subscenes"""
+
+    def construct(self):
+        self.set_speech_service(GTTSService(language='en'))
+
+        # Introduction
+        intro_scene = DESIntroScene()
+        intro_scene.construct()
+
+        # Structure explanation
+        structure_scene = DESStructureScene()
+        structure_scene.construct()
+
+        # Round function details
+        round_scene = DESRoundFunctionScene()
+        round_scene.construct()
+
+        # Security considerations
+        security_scene = DESSecurityScene()
+        security_scene.construct()
+
+        # Conclusion
+        conclusion_scene = DESConclusionScene()
+        conclusion_scene.construct()
