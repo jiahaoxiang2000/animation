@@ -1278,5 +1278,238 @@ class DESRoundScene(VoiceoverScene):
             return "".join(permuted)
         
         return bits  # Default fallback
+
+
+class DESMathScene(VoiceoverScene):
+    """Presents the mathematical formulation of the DES algorithm with concise blocks"""
+
+    def keep_and_move_to_top(self, *objects_to_keep, animate_duration=1.0, spacing=0.5):
+        """
+        Keeps specified objects visible while fading out everything else,
+        then moves the kept objects to the top position.
         
-         
+        Parameters:
+        -----------
+        *objects_to_keep : Mobject
+            The objects that should remain visible
+        animate_duration : float, optional
+            Duration of the animation in seconds, defaults to 1.0
+        spacing : float, optional
+            Horizontal spacing between objects, defaults to 0.5
+        
+        Returns:
+        --------
+        VGroup
+            A group containing all kept objects in their new positions
+        """
+        # Collect all objects that need to be removed
+        all_mobjects = self.mobjects.copy()
+        objects_to_remove = []
+        
+        # Identify objects to remove (those not in objects_to_keep)
+        for mob in all_mobjects:
+            if mob not in objects_to_keep:
+                objects_to_remove.append(mob)
+        
+        # Fade out objects that aren't being kept
+        if objects_to_remove:
+            self.play(
+                *[FadeOut(obj) for obj in objects_to_remove],
+                run_time=animate_duration
+            )
+        
+        # Create a group for the kept objects for easier positioning
+        kept_group = VGroup(*objects_to_keep)
+        
+        
+        return kept_group
+
+    def construct(self):
+        self.set_speech_service(GTTSService())
+
+        # Title
+        title = Text("DES Mathematical Formulation", font_size=48, color=BLUE_D).to_edge(UP)
+        
+        with self.voiceover("Let's examine the core mathematical formulations that define the DES algorithm."):
+            self.play(Write(title))
+        
+        # Overall process overview
+        process_formula = MathTex(
+            r"C &= \text{DES}_K(P)\\",
+            r"P &= \text{DES}_K^{-1}(C)",
+            font_size=36
+        ).next_to(title, DOWN, buff=0.8)
+        
+        with self.voiceover("At its most basic level, DES is defined by these two inverse operations: encryption transforms plaintext to ciphertext, and decryption reverses the process using the same key."):
+            self.play(Write(process_formula))
+            self.wait(1)
+        
+        # Clear for next section
+        self.play(FadeOut(process_formula))
+        
+        # Key Schedule Block
+        key_title = Text("Key Schedule", font_size=36, color=YELLOW_D).next_to(title, DOWN, buff=0.5)
+        key_box = Rectangle(height=4.5, width=10, color=YELLOW).next_to(key_title, DOWN, buff=0.3)
+        
+        # Key schedule equations inside box
+        key_formulas = MathTex(
+            r"K_{64} &= \text{Original Key (64 bits)}\\",
+            r"K_{56} &= PC_1(K_{64}) \quad\text{(56-bit permuted key)}\\",
+            r"(C_0, D_0) &= \text{Split}(K_{56}) \quad\text{(28 bits each)}\\",
+            r"C_i &= LS_i(C_{i-1}) \quad\text{(Left Shift by schedule)}\\",
+            r"D_i &= LS_i(D_{i-1}) \quad\text{(Left Shift by schedule)}\\",
+            r"K_i &= PC_2(C_i \parallel D_i) \quad\text{(48-bit round subkey)}",
+            font_size=30
+        ).move_to(key_box)
+        
+        with self.voiceover("The key schedule generates sixteen subkeys. It starts with permutation choice one, which selects 56 bits from the original 64-bit key."):
+            self.play(
+                Write(key_title),
+                Create(key_box)
+            )
+            self.play(Write(key_formulas[0:2]))
+        
+        with self.voiceover("The 56-bit key is split into two 28-bit halves, C zero and D zero."):
+            self.play(Write(key_formulas[2]))
+        
+        with self.voiceover("For each round i, both halves are rotated left according to a predefined shift schedule."):
+            self.play(Write(key_formulas[3:5]))
+        
+        with self.voiceover("Then permutation choice two selects 48 bits from the concatenated halves to form each round subkey K i."):
+            self.play(Write(key_formulas[5]))
+        
+        # Shift schedule note
+        shift_schedule = Tex(
+            r"$LS_i$ = 1 bit for rounds 1, 2, 9, 16; 2 bits for other rounds",
+            font_size=24, color=GRAY
+        ).next_to(key_box, DOWN, buff=0.2)
+        
+        with self.voiceover("The shift amounts vary by round: one bit for rounds one, two, nine, and sixteen; and two bits for all other rounds."):
+            self.play(Write(shift_schedule))
+        
+        # Group all key schedule elements
+        key_group = VGroup(key_title, key_box, key_formulas, shift_schedule)
+        
+        # Encryption Block
+        encryption_title = Text("Encryption Process", font_size=36, color=BLUE_D)
+        encryption_box = Rectangle(height=4, width=10, color=BLUE)
+        
+        # Position encryption block below after shrinking key block
+        with self.voiceover("Now let's examine the encryption process itself."):
+            self.keep_and_move_to_top(title, spacing=0.5) 
+            
+            encryption_title.next_to(title, DOWN, buff=0.5)
+            encryption_box.next_to(encryption_title, DOWN, buff=0.3)
+            
+            self.play(
+                Write(encryption_title),
+                Create(encryption_box)
+            )
+        
+        # Encryption formulas
+        encrypt_formulas = MathTex(
+            r"P_{64} &= \text{Plaintext (64 bits)}\\",
+            r"IP &= \text{Initial Permutation}\\",
+            r"(L_0, R_0) &= IP(P_{64}) \quad\text{(32 bits each)}\\",
+            r"\\",
+            r"\text{For } i &= 1 \text{ to } 16:\\",
+            r"L_i &= R_{i-1}\\",
+            r"R_i &= L_{i-1} \oplus F(R_{i-1}, K_i)\\",
+            r"\\",
+            r"C_{64} &= IP^{-1}(R_{16} \parallel L_{16}) \quad\text{(Note the swap)}",
+            font_size=28
+        ).move_to(encryption_box)
+        
+        with self.voiceover("Encryption begins with an initial permutation of the 64-bit plaintext, dividing it into two 32-bit halves, L zero and R zero."):
+            self.play(Write(encrypt_formulas[0:3]))
+        
+        with self.voiceover("For each of the sixteen rounds, the new left half becomes the previous right half."):
+            self.play(Write(encrypt_formulas[4:6]))
+        
+        with self.voiceover("The new right half is computed by XORing the previous left half with the output of the F function, which takes the previous right half and the current round subkey."):
+            self.play(Write(encrypt_formulas[6]))
+        
+        with self.voiceover("After sixteen rounds, a final permutation is applied to produce the ciphertext, but note that the left and right halves are swapped first."):
+            self.play(Write(encrypt_formulas[8]))
+        
+        # F Function box (nested inside encryption)
+        f_function_title = Text("F Function", font_size=28, color=GREEN_D)
+        f_function_box = Rectangle(height=2.5, width=6, color=GREEN)
+        
+        
+        
+        with self.voiceover("The F function is the core transformation in each round."):
+            self.keep_and_move_to_top(title, spacing=0.5)
+            # Position F function box in lower part of encryption box
+            f_function_title.next_to(title, DOWN, buff=0.7)
+            f_function_box.next_to(f_function_title, DOWN, buff=0.2)
+            self.play(
+                Write(f_function_title),
+                Create(f_function_box)
+            )
+        
+        # F function formulas
+        f_formulas = MathTex(
+            r"F(R, K) &= P(S(E(R) \oplus K))\\",
+            r"E &: 32 \text{ bits} \rightarrow 48 \text{ bits (Expansion)}\\",
+            r"S &: 48 \text{ bits} \rightarrow 32 \text{ bits (S-boxes)}\\",
+            r"P &: 32 \text{ bits} \rightarrow 32 \text{ bits (Permutation)}",
+            font_size=24
+        ).move_to(f_function_box)
+        
+        with self.voiceover("The F function can be expressed as a composition of operations: expansion, XOR with the round key, substitution through S-boxes, and finally a permutation."):
+            self.play(Write(f_formulas))
+        
+        # Group all encryption elements
+        encrypt_group = VGroup(encryption_title, encryption_box, encrypt_formulas, f_function_title, f_function_box, f_formulas)
+        
+        # Decryption Block - Show that it uses the same structure with reversed keys
+        decryption_title = Text("Decryption Process", font_size=36, color=RED_D)
+        decryption_box = Rectangle(height=4, width=10, color=RED)
+
+        
+        # Position decryption block
+        with self.voiceover("Finally, let's look at the decryption process."):
+            self.keep_and_move_to_top(title, spacing=0.5)
+            
+            decryption_title.next_to(title, DOWN, buff=0.7)
+            decryption_box.next_to(decryption_title, DOWN, buff=0.3)
+            
+            self.play(
+                Write(decryption_title),
+                Create(decryption_box)
+            )
+        
+        # Decryption formulas
+        decrypt_formulas = MathTex(
+            r"C_{64} &= \text{Ciphertext (64 bits)}\\",
+            r"(L_0, R_0) &= IP(C_{64})\\",
+            r"\text{For } i &= 1 \text{ to } 16:\\",
+            r"L_i &= R_{i-1}\\",
+            r"R_i &= L_{i-1} \oplus F(R_{i-1}, K_{17-i})\\",
+            r"\\",
+            r"P_{64} &= IP^{-1}(R_{16} \parallel L_{16})",
+            font_size=28
+        ).move_to(decryption_box)
+        
+        with self.voiceover("The decryption process is identical to encryption, except that the subkeys are used in reverse order. K sixteen is used in round one, K fifteen in round two, and so on."):
+            self.play(Write(decrypt_formulas))
+            
+            # Highlight the key reversal
+            self.play(
+                Indicate(decrypt_formulas[4], color=YELLOW, scale_factor=1.1),
+                run_time=1.5
+            )
+        
+        # Final mathematical property
+        property_text = MathTex(
+            r"\text{DES}_K^{-1}(\text{DES}_K(P)) = P",
+            font_size=36, color=BLUE_D
+        ).to_edge(DOWN, buff=1)
+        
+        with self.voiceover("This mathematical property is what makes DES a symmetric cipher: encryption followed by decryption with the same key recovers the original plaintext."):
+            self.play(Write(property_text))
+            self.play(
+                Circumscribe(property_text, color=YELLOW, fade_in=True, fade_out=True),
+                run_time=2
+            )
