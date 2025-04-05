@@ -267,6 +267,52 @@ class DESStructureScene(VoiceoverScene):
 class DESKeyScheduleScene(VoiceoverScene):
     """Illustrates the DES key schedule process with bit-level transformations"""
 
+    def keep_and_move_to_top(self, *objects_to_keep, animate_duration=1.0, spacing=0.5):
+        """
+        Keeps specified objects visible while fading out everything else,
+        then moves the kept objects to the top position.
+        
+        Parameters:
+        -----------
+        *objects_to_keep : Mobject
+            The objects that should remain visible
+        animate_duration : float, optional
+            Duration of the animation in seconds, defaults to 1.0
+        spacing : float, optional
+            Horizontal spacing between objects, defaults to 0.5
+        
+        Returns:
+        --------
+        VGroup
+            A group containing all kept objects in their new positions
+        """
+        # Collect all objects that need to be removed
+        all_mobjects = self.mobjects.copy()
+        objects_to_remove = []
+        
+        # Identify objects to remove (those not in objects_to_keep)
+        for mob in all_mobjects:
+            if mob not in objects_to_keep:
+                objects_to_remove.append(mob)
+        
+        # Fade out objects that aren't being kept
+        if objects_to_remove:
+            self.play(
+                *[FadeOut(obj) for obj in objects_to_remove],
+                run_time=animate_duration
+            )
+        
+        # Create a group for the kept objects for easier positioning
+        kept_group = VGroup(*objects_to_keep)
+        
+        # Move kept objects to top position while preserving their vertical relationship
+        self.play(
+            kept_group.animate.to_edge(UP).shift(DOWN * 1),
+            run_time=animate_duration
+        )
+        
+        return kept_group
+
     def construct(self):
         self.set_speech_service(GTTSService())
 
@@ -319,16 +365,15 @@ class DESKeyScheduleScene(VoiceoverScene):
                 ) for i, j in zip(range(64), range(56))],
                 run_time=track.duration
             )
-            
-            # Clean up the initial key display to reduce clutter
-            self.play(
-                FadeOut(key_text),
-                FadeOut(key_bits)
-            )
 
         # Split into C and D blocks using LaTeX with clearer visuals
         c0_title = MathTex(r"C_0 = K_{56}[0:28]", font_size=26, color=RED)
         d0_title = MathTex(r"D_0 = K_{56}[28:56]", font_size=26, color=BLUE)
+
+        self.keep_and_move_to_top(
+           c0_bits, d0_bits,
+            spacing=0.5
+        )
         
         
         with self.voiceover("The 56-bit key is then split into two 28-bit halves, called C-zero and D-zero."):
@@ -341,12 +386,6 @@ class DESKeyScheduleScene(VoiceoverScene):
             Write(d0_title)
             )
             
-            # No need to move the bits, just indicate them
-            self.play(
-            FadeOut(pc1_title),
-            FadeOut(pc1_formula)
-            )
-            
             # Highlight each half
             self.play(
             Indicate(c0_bits, color=RED, scale_factor=1.2),
@@ -357,9 +396,8 @@ class DESKeyScheduleScene(VoiceoverScene):
             run_time=1
             )
 
-         # Rotation visualization - improved with better visual representation and position handling
-
-        rotation_title = Tex(r"\textbf{Key Rotation}", font_size=32, color=YELLOW_D).to_edge(UP).shift(DOWN * 1)
+        # Rotation title positioned using absolute coordinates instead of relative to specific objects
+        rotation_title = Tex(r"\textbf{Key Rotation}", font_size=32, color=YELLOW_D).next_to(self.mobjects[0], DOWN, buff=0.5)
         
         with self.voiceover("For each round, both halves are rotated left by a specific number of positions based on the round number."):
             self.play(
@@ -388,9 +426,9 @@ class DESKeyScheduleScene(VoiceoverScene):
         c1_bits = VGroup(*[Text(bit, font_size=20, color=RED_B) for bit in c1_bit_values])
         d1_bits = VGroup(*[Text(bit, font_size=20, color=BLUE_B) for bit in d1_bit_values])
         
-        # Position C1 and D1 above C0 and D0
-        c1_bits.arrange_in_grid(rows=1, buff=0.2).next_to(c0_bits, UP, buff=0.7)
-        d1_bits.arrange_in_grid(rows=1, buff=0.2).next_to(d0_bits, UP, buff=0.7)
+        # Position C1 and D1 below the kept elements
+        c1_bits.arrange_in_grid(rows=1, buff=0.2).next_to(rotation_title, DOWN*2, buff=0.7)
+        d1_bits.arrange_in_grid(rows=1, buff=0.2).next_to(c1_bits, DOWN, buff=0.7)
         
         # Add labels for C1 and D1
         c1_title = MathTex(r"C_1", font_size=26, color=RED_B).next_to(c1_bits, LEFT, buff=0.5)
@@ -403,26 +441,6 @@ class DESKeyScheduleScene(VoiceoverScene):
                 Indicate(d0_bits[0], color=YELLOW, scale_factor=1.5),
             )
             
-            # Create rotation arrows to indicate circular shift
-            c_rotation_arrow = CurvedArrow(
-                c0_bits[0].get_center() + UP*0.2, 
-                c0_bits[-1].get_center() + UP*0.2, 
-                angle=-TAU/4,
-                color=RED_B
-            ).scale(0.8)
-            
-            d_rotation_arrow = CurvedArrow(
-                d0_bits[0].get_center() + UP*0.2, 
-                d0_bits[-1].get_center() + UP*0.2, 
-                angle=-TAU/4,
-                color=BLUE_B
-            ).scale(0.8)
-            
-            self.play(
-                Create(c_rotation_arrow),
-                Create(d_rotation_arrow)
-            )
-            
             # Show the bits rotating to their new positions
             self.play(
                 FadeIn(c1_title),
@@ -432,12 +450,12 @@ class DESKeyScheduleScene(VoiceoverScene):
                 run_time=2
             )
             
-            # Remove the arrows
-            self.play(
-                FadeOut(c_rotation_arrow),
-                FadeOut(d_rotation_arrow)
-            )
-        
+        self.keep_and_move_to_top(
+            c1_bits, d1_bits,
+            c1_title, d1_title,
+            spacing=0.5
+        ) 
+
         with self.voiceover("After rotation, we get new C-one and D-one values that will be used to create the subkey for round one."):
         # Highlight the new C1 and D1 groups
             self.play(
@@ -448,7 +466,7 @@ class DESKeyScheduleScene(VoiceoverScene):
         
         # PC-2 Transformation with visually appealing effects
         pc2_title = Tex(r"\textbf{Permuted Choice 2 (PC-2)}", font_size=32, color=GREEN_D)
-        pc2_title.to_edge(UP).shift(DOWN * 1)
+        pc2_title.next_to(d1_bits, DOWN, buff=0.5)
         
         # Mathematical formulation with LaTeX
         pc2_formula = MathTex(
@@ -465,18 +483,7 @@ class DESKeyScheduleScene(VoiceoverScene):
         formula_group.next_to(pc2_title, DOWN, buff=0.3)
         
         with self.voiceover("Now we apply Permuted Choice 2, which selects 48 specific bits from the combined C-one and D-one values."):
-            # First fade out the previous elements
-            self.play(
-            FadeOut(rotation_title),
-            FadeOut(schedule_text),
-            FadeOut(pc1_bits),
-            FadeOut(c1_bits),
-            FadeOut(d0_bits),
-            FadeOut(c0_title),
-            FadeOut(d0_title),
-            run_time=1
-            )
-            
+    
             # Then write the new elements
             self.play(
             Write(pc2_title),
@@ -484,219 +491,61 @@ class DESKeyScheduleScene(VoiceoverScene):
             Write(pc2_description),
             run_time=1
             )
+
+        self.keep_and_move_to_top(
+            pc2_formula,
+            spacing=0.5
+        )
         
-        # # Create a combined C1||D1 visualization
-        # combined_bits_title = MathTex(r"C_1 \parallel D_1", font_size=28, color=PURPLE_B)
+        # Create the final subkey K1 by the VGroup, also use the arrange_in_grid to show one two row, 
+        k1_subkey = VGroup(c1_bits, d1_bits).arrange_in_grid(rows=2, buff=0.2)
+        k1_subkey.next_to(pc2_formula, DOWN, buff=0.5)
         
-        # # Move and reorganize C1 and D1 bits to show concatenation
-        # combined_c1d1_group = VGroup()
+        with self.voiceover("We combine C1 and D1 to form a 56-bit value that will be input to PC-2."):
+            self.play(Write(k1_subkey))
+
+        # Create the final K1 subkey, here we need the animate to show the permutation 2 transformation
+        k1_output = "101011001000110111110011000010101111000001010111"
+        k1_bits = VGroup(*[Text(bit, font_size=20, color=GREEN) for bit in k1_output])
+        k1_bits.arrange_in_grid(rows=2, buff=0.2).next_to(k1_subkey, DOWN, buff=0.5)
         
-        # with self.voiceover("First, we concatenate C-one and D-one to form a 56-bit value."):
-        #     # Prepare concatenated bit array
-        #     self.play(
-        #         # Create title for combined bits
-        #         Write(combined_bits_title.to_edge(LEFT).shift(RIGHT * 3 + UP * 0.5)),
+        k1_title = MathTex(r"K_1 \text{ (48-bit subkey)}", font_size=28, color=GREEN_D).next_to(k1_bits, LEFT, buff=0.5)
+        
+        with self.voiceover("PC-2 selects and permutes 48 bits from the 56-bit combined key to create the round subkey. Watch how the bits are rearranged according to the PC-2 permutation table.") as tracker:
+            # First show the PC-2 selection with animated paths from source to destination
+            animations = []
+            for i in range(48):
+                # Use a random source bit position for visual effect (in a real implementation, this would follow the actual PC-2 table)
+                source_idx = i % 56
+                source_row = 0 if source_idx < 28 else 1
+                source_col = source_idx % 28
                 
-        #         # Keep the titles visible but move them
-        #         c1_title.animate.scale(0.8).to_edge(LEFT).shift(RIGHT * 1.5 + UP * 0.5),
-        #         d1_title.animate.scale(0.8).to_edge(LEFT).shift(RIGHT * 4.5 + UP * 0.5),
+                # Get the source mobject (either from c1_bits or d1_bits)
+                source_mob = c1_bits[source_col] if source_row == 0 else d1_bits[source_col % 28]
                 
-        #         # Move bit groups to show concatenation
-        #         c1_bits.animate.scale(0.8).arrange(RIGHT, buff=0.1).next_to(c1_title, RIGHT, buff=0.2),
-        #         d1_bits.animate.scale(0.8).arrange(RIGHT, buff=0.1).next_to(d1_bits, RIGHT, buff=0.2),
-                
-        #         # Fade out the original C0 and D0 groups to reduce visual clutter
-                
-                
-        #         run_time=2.5
-        #     )
+                # Create a copy and transform it to the destination
+                animations.append(
+                    TransformFromCopy(
+                        source_mob,
+                        k1_bits[i],
+                        path_arc=PI/3,
+                        run_time=min(2, tracker.duration * 0.8/48)
+                    )
+                )
             
-        #     # Highlight the concatenated bits with a surrounding rectangle
-        #     combined_rect = SurroundingRectangle(
-        #         VGroup(c1_bits, d1_bits), 
-        #         color=PURPLE_B, 
-        #         buff=0.15,
-        #         stroke_width=2,
-        #         corner_radius=0.2
-        #     )
-        #     self.play(
-        #         Create(combined_rect),
-        #         Flash(combined_rect, color=PURPLE_B, line_length=0.1, flash_radius=0.2)
-        #     )
+            # Play all transformations with a slight lag for visual appeal
+            self.play(
+            LaggedStart(*animations, lag_ratio=0.02),
+            run_time=min(3, tracker.duration * 0.8)
+            )
+            self.play(Write(k1_title), run_time=min(1, tracker.duration * 0.2))
         
-        # # Create K1 (48-bit subkey) using a visually distinct pattern
-        # # Using a Manim-compatible bit selection to demonstrate PC-2
-        # k1_string = "101100101111001100001010010101100110111100001010"  # Example 48-bit subkey
+        with self.voiceover("This 48-bit subkey K1 is now ready to be used in the first round of DES encryption. The process repeats for all 16 rounds, with different rotation amounts to generate unique subkeys for each round."):
+            self.play(
+            Indicate(k1_bits, color=GREEN_D, scale_factor=1.2),
+            run_time=2
+            )
         
-        # # Create the destination for K1 bits
-        # k1_bits = VGroup(*[Text(bit, font_size=18, color=GREEN_D) for bit in k1_string])
-        # k1_bits.arrange(RIGHT, buff=0.1).shift(DOWN * 1.5)
-        
-        # # Create a visually appealing box for K1
-        # k1_box = RoundedRectangle(
-        #     height=k1_bits.height + 0.4,
-        #     width=k1_bits.width + 0.4,
-        #     corner_radius=0.2,
-        #     color=GREEN_D,
-        #     fill_opacity=0.1
-        # ).move_to(k1_bits)
-        
-        # # Add a label for K1
-        # k1_label = MathTex(r"K_1", font_size=30, color=GREEN_D).next_to(k1_box, LEFT, buff=0.3)
-        
-        # # Mathematical formulation specifically for K1
-        # k1_formula = MathTex(
-        #     r"K_1 = \text{PC}_2(C_1 \parallel D_1)",
-        #     r"= \text{Selected 48 bits}",
-        #     font_size=24
-        # ).arrange(DOWN, aligned_edge=LEFT).to_edge(RIGHT).shift(LEFT * 2 + UP * 2)
-        
-        # with self.voiceover("Permuted Choice 2 selects 48 specific bits from the combined 56-bit key to create the round subkey K1."):
-        #     # Display the K1 formula
-        #     self.play(
-        #         Write(k1_formula),
-        #         Create(k1_box),
-        #         Write(k1_label),
-        #         run_time=1.5
-        #     )
-        
-        # # Define source bit indices (these would normally come from the PC-2 table)
-        # # We'll use some example indices for illustration
-        # source_indices = [
-        #     9, 17, 23, 31, 13, 28, 2, 18, 
-        #     24, 16, 30, 6, 26, 20, 10, 1, 
-        #     8, 14, 25, 3, 4, 29, 11, 19, 
-        #     32, 12, 22, 7, 5, 27, 15, 21, 
-        #     38, 48, 54, 35, 45, 56, 37, 39, 
-        #     46, 50, 42, 33, 51, 47, 44, 49
-        # ]
-        
-        # # Adjust indices to be 0-based
-        # source_indices = [i-1 for i in source_indices]
-        
-        # # Create more realistic transformation with PC-2 pattern
-        # with self.voiceover("Let's watch as specific bits are selected from the combined key according to the permutation table.") as track:
-        #     # Animate selection of individual bits with staggered timing for visual appeal
-        #     animations = []
-            
-        #     # Group animations to show multiple bits transforming simultaneously
-        #     for i in range(0, 48, 6):  # Process in groups of 6 for better visualization
-        #         group_anims = []
-        #         for j in range(6):  # 6 bits per group
-        #             if i+j < 48:  # Ensure we don't go beyond 48 bits
-        #                 source_idx = source_indices[i+j]
-        #                 source_bit = c1_bits[source_idx] if source_idx < 28 else d1_bits[source_idx-28]
-                        
-        #                 # Create a copy animation with path arc for better visual effect
-        #                 transform = TransformFromCopy(
-        #                     source_bit,
-        #                     k1_bits[i+j],
-        #                     path_arc=PI/3,
-        #                     rate_func=smooth
-        #                 )
-                        
-        #                 # Flash the source bit for emphasis
-        #                 flash = Flash(
-        #                     source_bit, 
-        #                     color=YELLOW_A, 
-        #                     line_length=0.1, 
-        #                     flash_radius=0.2,
-        #                     line_stroke_width=2
-        #                 )
-                        
-        #                 group_anims.append(AnimationGroup(flash, transform, lag_ratio=0.2))
-                
-        #         # Play each group with slight stagger for visual appeal
-        #         self.play(
-        #             AnimationGroup(*group_anims, lag_ratio=0.15),
-        #             run_time=min(1.2, track.duration/8)  # Adjust timing based on voiceover
-        #         )
-        
-        # # Emphasize the final K1
-        # with self.voiceover("And thus, we have our first round subkey, K1, which will be used in the first round of the DES encryption process."):
-        #     self.play(
-        #         Indicate(k1_bits, color=GREEN, scale_factor=1.1),
-        #         Flash(k1_box, color=GREEN_D, line_length=0.2, flash_radius=0.5),
-        #         run_time=2
-        #     )
-        
-        # # Show the key schedule continuation
-        # key_schedule_text = Tex(
-        #     r"\textbf{For each round $i$ from 1 to 16:}",
-        #     r"1. $C_i = \text{LeftShift}(C_{i-1}, \text{shift}_i)$",
-        #     r"2. $D_i = \text{LeftShift}(D_{i-1}, \text{shift}_i)$",
-        #     r"3. $K_i = \text{PC}_2(C_i \parallel D_i)$",
-        #     font_size=24
-        # ).arrange(DOWN, aligned_edge=LEFT, buff=0.3).to_edge(DOWN, buff=0.8)
-        
-        # with self.voiceover("This entire process repeats for all sixteen rounds, with each round using different rotation amounts to create sixteen unique subkeys."):
-        #     self.play(
-        #         Write(key_schedule_text),
-        #         run_time=2.5
-        #     )
-        
-        
-        
-        
-        # # PC-2 Transformation with simplified and clearer visuals
-        # pc2_title = Tex(r"\textbf{Permuted Choice 2 (PC-2)}", font_size=32, color=GREEN_D).to_edge(UP).shift(DOWN * 0.5)
-        # pc2_formula = MathTex(
-        #     r"K_1 = \text{PC}_2(C_1 \parallel D_1)", r"\text{ (Selects 48 bits from 56)}"
-        # ).next_to(pc2_title, DOWN)
-        
-        # with self.voiceover("Now we combine C1 and D1 and apply Permuted Choice 2 to form a 48-bit subkey for the first round."):
-        #     # Clear the rotation visuals
-        #     self.play(
-        #         FadeOut(rotation_title),
-        #         FadeOut(schedule_text),
-        #         FadeOut(c0_title),
-        #         FadeOut(d0_title),
-        #         Write(pc2_title),
-        #         Write(pc2_formula)
-        #     )
-            
-        #     # Move C1 and D1 bits to center for concatenation
-        #     self.play(
-        #         c0_bits.animate.arrange(RIGHT, buff=0.2).move_to(LEFT * 2),
-        #         d0_bits.animate.arrange(RIGHT, buff=0.2).move_to(RIGHT * 2)
-        #     )
-        
-        # # Create K1 (48-bit subkey) from PC-2
-        # k1_string = "110100101011000011001101001111010101100110011110"  # Example 48-bit subkey
-        # k1_bits = VGroup(*[Text(bit, font_size=20, color=GREEN) for bit in k1_string])
-        # k1_bits.arrange(RIGHT, buff=0.2).shift(DOWN * 1.5)
-        
-        # k1_label = MathTex(r"K_1 \text{ (48-bit subkey)}", font_size=28, color=GREEN_D).next_to(k1_bits, UP, buff=0.5)
-        
-        # # Show bits being selected to form K1
-        # with self.voiceover("Permuted Choice 2 selects 48 bits from the combined 56 bits to produce the round subkey K1. Each round generates a different subkey using the same process but with different rotations.") as track:
-        #     self.play(Write(k1_label), run_time=1)
-            
-        #     # Show bits being selected with transform animation
-        #     sample_indices = [3, 8, 12, 18, 22, 27, 31, 36, 42, 45, 50, 53]
-            
-        #     for i, target_index in zip(sample_indices, range(0, 48, 4)):
-        #         source_bit = c0_bits[i % 28].copy() if i < 28 else d0_bits[i - 28].copy()
-                
-        #         self.play(
-        #             TransformFromCopy(source_bit, k1_bits[target_index]), 
-        #             Flash(source_bit, color=YELLOW_A, line_length=0.1, flash_radius=0.2),
-        #             run_time=0.2
-        #         )
-            
-        #     # Fade in the rest of K1 bits
-        #     self.play(
-        #         FadeIn(VGroup(*[k1_bits[i] for i in range(48) if i % 4 != 0])),
-        #         run_time=min(track.duration - 3, 2)
-        #     )
-        
-        # # Emphasize the complete key schedule process
-        # process_text = Tex(r"\textbf{This process repeats for all 16 rounds, generating 16 unique subkeys}", 
-        #                    font_size=28, color=YELLOW_D).to_edge(DOWN, buff=0.8)
-        
-        # with self.voiceover("This process repeats for all sixteen rounds, with each round's rotation producing a unique subkey that strengthens DES's security."):
-        #     self.play(Write(process_text))
-        
-        # # Clean up
-        # with self.voiceover("This completes our detailed look at the DES key schedule process."):
-        #     self.play(*[FadeOut(mob) for mob in self.mobjects])
+      
+
+         
