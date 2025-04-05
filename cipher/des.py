@@ -7,7 +7,13 @@ class DESIntroScene(VoiceoverScene):
     """Introduction to DES with basic overview"""
 
     def construct(self):
-        self.set_speech_service(GTTSService())
+        # self.set_speech_service(GTTSService())
+        self.set_speech_service(
+            OpenAIService(
+                voice="fable",
+                model="tts-1-hd",
+            )
+        )
 
         # Title
         title = Text("Data Encryption Standard (DES)",
@@ -113,13 +119,13 @@ class DESStructureScene(VoiceoverScene):
     """Shows the overall structure of the DES algorithm"""
 
     def construct(self):
-        # self.set_speech_service(
-        #     OpenAIService(
-        #         voice="fable",
-        #         model="tts-1-hd",
-        #     )
-        # )
-        self.set_speech_service(GTTSService())
+        self.set_speech_service(
+            OpenAIService(
+                voice="fable",
+                model="tts-1-hd",
+            )
+        )
+        # self.set_speech_service(GTTSService())
         
         title = Text("DES Algorithm Structure", font_size=48, color=BLUE_D).to_edge(UP)
         
@@ -314,7 +320,13 @@ class DESKeyScheduleScene(VoiceoverScene):
         return kept_group
 
     def construct(self):
-        self.set_speech_service(GTTSService())
+        # self.set_speech_service(GTTSService())
+        self.set_speech_service(
+            OpenAIService(
+                voice="fable",
+                model="tts-1-hd",
+            )
+        )
 
         # Title
         title = Text("DES Key Schedule", font_size=48, color=YELLOW_D).to_edge(UP)
@@ -597,7 +609,13 @@ class DESRoundScene(VoiceoverScene):
         return kept_group
 
     def construct(self):
-        self.set_speech_service(GTTSService())
+        # self.set_speech_service(GTTSService())
+        self.set_speech_service(
+            OpenAIService(
+                voice="fable",
+                model="tts-1-hd",
+            )
+        )
 
         # Title for the scene
         title = Text("DES Round Function", font_size=48, color=BLUE_D).to_edge(UP)
@@ -1325,7 +1343,13 @@ class DESMathScene(VoiceoverScene):
         return kept_group
 
     def construct(self):
-        self.set_speech_service(GTTSService())
+        # self.set_speech_service(GTTSService())
+        self.set_speech_service(
+            OpenAIService(
+                voice="fable",
+                model="tts-1-hd",
+            )
+        )
 
         # Title
         title = Text("DES Mathematical Formulation", font_size=48, color=BLUE_D).to_edge(UP)
